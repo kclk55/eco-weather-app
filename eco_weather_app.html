@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>氣象與環保整合 App</title>
+<style>
+:root{
+  --bg:#f4f7fb; --panel:#ffffff; --text:#132238; --muted:#6d7b91;
+  --primary:#3b82f6; --primary2:#0ea5e9; --success:#22c55e; --danger:#ef4444;
+  --border:#e6ebf2; --shadow:0 14px 35px rgba(31,49,76,.09);
+  --nav:#0f172a; --chip:#eef4ff;
+}
+body.dark{
+  --bg:#0f172a; --panel:#172033; --text:#f3f7ff; --muted:#9fb0c8;
+  --border:#26334a; --shadow:0 16px 35px rgba(0,0,0,.25); --nav:#08101f; --chip:#1d2b45;
+}
+body.green{
+  --bg:#f0f8f2; --panel:#ffffff; --text:#153527; --muted:#678274;
+  --primary:#16a34a; --primary2:#10b981; --border:#dceee2; --nav:#123b2c; --chip:#e8f7ee;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif;background:var(--bg);color:var(--text);transition:.25s}
+button,input{font:inherit}
+button{cursor:pointer}
+.app{min-height:100vh}
+.topbar{position:sticky;top:0;z-index:10;background:linear-gradient(135deg,var(--nav),#1f3a5c);color:white;padding:16px 22px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 8px 24px rgba(0,0,0,.15)}
+.brand{display:flex;gap:12px;align-items:center}
+.logo{width:42px;height:42px;border-radius:14px;background:linear-gradient(135deg,#38bdf8,#22c55e);display:grid;place-items:center;font-size:22px}
+.brand h1{font-size:18px;margin:0}
+.brand small{opacity:.7}
+.user{display:flex;align-items:center;gap:10px}
+.avatar{width:38px;height:38px;border-radius:50%;background:#dbeafe;color:#1d4ed8;display:grid;place-items:center;font-weight:800;overflow:hidden}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.shell{display:grid;grid-template-columns:220px 1fr;min-height:calc(100vh - 74px)}
+.sidebar{padding:18px;background:var(--panel);border-right:1px solid var(--border)}
+.tab{width:100%;border:0;background:transparent;color:var(--muted);padding:12px 14px;border-radius:12px;text-align:left;margin-bottom:6px}
+.tab.active{background:var(--chip);color:var(--primary);font-weight:700}
+.content{padding:22px;max-width:1200px;width:100%;margin:0 auto}
+.page{display:none}.page.active{display:block}
+.hero{display:flex;justify-content:space-between;gap:16px;align-items:end;margin-bottom:18px}
+.hero h2{margin:0 0 6px;font-size:28px}.hero p{margin:0;color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
+.card{grid-column:span 6;background:var(--panel);border:1px solid var(--border);border-radius:18px;padding:18px;box-shadow:var(--shadow)}
+.card.full{grid-column:span 12}.card.third{grid-column:span 4}.card.quarter{grid-column:span 3}
+.card h3{margin:0 0 12px}
+.metric{font-size:32px;font-weight:800}
+.muted{color:var(--muted)}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.input{width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:12px;background:var(--panel);color:var(--text);outline:none}
+.input:focus{border-color:var(--primary);box-shadow:0 0 0 3px color-mix(in srgb,var(--primary) 18%,transparent)}
+.btn{border:0;border-radius:12px;padding:11px 15px;background:var(--primary);color:white;font-weight:700}
+.btn.secondary{background:var(--chip);color:var(--primary)}
+.btn.danger{background:var(--danger)} .btn.success{background:var(--success)}
+.badge{display:inline-flex;padding:6px 10px;border-radius:999px;background:var(--chip);color:var(--primary);font-size:13px}
+.weather-main{display:flex;align-items:center;justify-content:space-between}
+.weather-icon{font-size:54px}
+.suggestion{margin-top:12px;padding:12px;border-radius:12px;background:var(--chip);color:var(--text)}
+.emergency{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.call-link{display:block;text-decoration:none;color:white;background:linear-gradient(135deg,#ef4444,#fb7185);padding:16px;border-radius:14px;font-weight:800}
+.call-screen{padding:24px;text-align:center;border-radius:18px;background:linear-gradient(160deg,#111827,#1e3a5f);color:white}
+.call-avatar{width:88px;height:88px;border-radius:50%;background:#c7d2fe;color:#3730a3;display:grid;place-items:center;font-size:34px;font-weight:800;margin:0 auto 12px}
+.call-actions{display:flex;justify-content:center;gap:12px;margin-top:20px;flex-wrap:wrap}
+.round{width:56px;height:56px;border-radius:50%;border:0;background:#334155;color:white;font-size:20px}
+.round.active{background:#22c55e}.round.hang{background:#ef4444}
+.chat-wrap{display:grid;grid-template-rows:1fr auto;height:66vh;min-height:470px}
+.chat-window{overflow:auto;padding:12px;border:1px solid var(--border);border-radius:16px;background:color-mix(in srgb,var(--panel) 88%,var(--bg))}
+.msg-row{display:flex;margin:10px 0}.msg-row.me{justify-content:flex-end}
+.bubble{max-width:72%;padding:10px 13px;border-radius:16px;background:#e7eefb;color:#15304e}
+.msg-row.me .bubble{background:var(--primary);color:white}
+.bubble img{max-width:100%;border-radius:12px;display:block}
+.composer{margin-top:12px;display:grid;grid-template-columns:auto 1fr auto;gap:8px}
+.stickers{display:none;gap:8px;flex-wrap:wrap;padding:10px;border:1px solid var(--border);border-radius:12px;background:var(--panel);margin-top:8px}
+.stickers.show{display:flex}.sticker{font-size:28px;border:0;background:transparent}
+.settings-group{display:grid;gap:12px}
+.theme-btn{padding:12px;border:1px solid var(--border);border-radius:12px;background:var(--panel);color:var(--text)}
+.switch{position:relative;width:52px;height:30px;background:#cbd5e1;border-radius:999px;display:inline-block}
+.switch input{display:none}.knob{position:absolute;top:4px;left:4px;width:22px;height:22px;background:white;border-radius:50%;transition:.2s}
+.switch input:checked + .knob{transform:translateX(22px)}.switch:has(input:checked){background:var(--success)}
+.preview-img{width:74px;height:74px;border-radius:50%;object-fit:cover;border:3px solid var(--border)}
+.small{font-size:13px}
+@media(max-width:900px){
+  .shell{grid-template-columns:1fr}.sidebar{display:flex;overflow:auto;border-right:0;border-bottom:1px solid var(--border);padding:10px;position:sticky;top:74px;z-index:9}
+  .tab{min-width:120px;margin:0 5px 0 0;text-align:center}.content{padding:16px}
+  .card,.card.third,.card.quarter{grid-column:span 12}
+}
+@media(max-width:600px){
+  .topbar{padding:12px 14px}.brand small{display:none}.brand h1{font-size:16px}.user span{display:none}
+  .hero{align-items:start;flex-direction:column}.hero h2{font-size:24px}
+  .emergency{grid-template-columns:1fr}.chat-wrap{height:64vh}.bubble{max-width:84%}
+}
+</style>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">🌦️</div>
+      <div><h1>EcoWeather</h1><small>氣象 × 環保整合平台</small></div>
+    </div>
+    <div class="user">
+      <span id="topNickname">Tim</span>
+      <div class="avatar" id="topAvatar">T</div>
+    </div>
+  </header>
+
+  <div class="shell">
+    <nav class="sidebar">
+      <button class="tab active" data-tab="home">🏠 首頁</button>
+      <button class="tab" data-tab="weather">🌤️ 氣象</button>
+      <button class="tab" data-tab="carbon">🌱 碳足跡</button>
+      <button class="tab" data-tab="call">📞 通話</button>
+      <button class="tab" data-tab="chat">💬 聊天</button>
+      <button class="tab" data-tab="settings">⚙️ 設定</button>
+    </nav>
+
+    <main class="content">
+      <section class="page active" id="home">
+        <div class="hero"><div><h2>晚安，<span id="homeName">Tim</span> 👋</h2><p>一起查看今天的天氣與環保資訊。</p></div><span class="badge">即時儀表板</span></div>
+        <div class="grid">
+          <div class="card">
+            <h3>🌤️ 當前氣象</h3>
+            <div class="weather-main"><div><div class="metric" id="homeTemp">28°C</div><div class="muted" id="homeWeather">台北 · 多雲</div></div><div class="weather-icon">⛅</div></div>
+          </div>
+          <div class="card">
+            <h3>🌱 本月碳排摘要</h3>
+            <div class="metric"><span id="homeCarbon">0</span> <small>kg CO₂e</small></div>
+            <div class="muted">依用電量快速估算</div>
+          </div>
+          <div class="card">
+            <h3>🚨 緊急通話</h3>
+            <div class="row"><a href="tel:119" class="btn danger" style="text-decoration:none">撥打 119</a><button class="btn secondary" onclick="openTab('call')">更多聯絡方式</button></div>
+          </div>
+          <div class="card">
+            <h3>💬 最新聊天</h3>
+            <div id="latestMsg">朋友：今天空氣品質看起來不錯！</div>
+            <button class="btn secondary" style="margin-top:12px" onclick="openTab('chat')">開啟聊天</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="page" id="weather">
+        <div class="hero"><div><h2>氣象查詢</h2><p>輸入城市，模擬即時更新天氣資訊。</p></div></div>
+        <div class="card full">
+          <div class="row">
+            <input class="input" id="cityInput" value="台北" placeholder="輸入城市，例如：台北、桃園、高雄" style="flex:1;min-width:220px"/>
+            <button class="btn" onclick="searchWeather()">搜尋</button>
+          </div>
+        </div>
+        <div class="grid" style="margin-top:16px">
+          <div class="card third"><h3>🌡️ 氣溫</h3><div class="metric" id="tempVal">28°C</div></div>
+          <div class="card third"><h3>🌦️ 天氣狀況</h3><div class="metric" style="font-size:24px" id="conditionVal">多雲</div><div class="muted">降雨機率 <span id="rainVal">20%</span></div></div>
+          <div class="card third"><h3>💧 濕度</h3><div class="metric" id="humidityVal">72%</div></div>
+        </div>
+      </section>
+
+      <section class="page" id="carbon">
+        <div class="hero"><div><h2>碳足跡計算機</h2><p>公式：每月用電量 × 0.495 kg CO₂e / 度</p></div></div>
+        <div class="grid">
+          <div class="card">
+            <h3>輸入每月用電量</h3>
+            <input class="input" id="powerInput" type="number" min="0" placeholder="例如：300"/>
+            <button class="btn success" style="margin-top:12px" onclick="calcCarbon()">計算排放量</button>
+          </div>
+          <div class="card">
+            <h3>估算結果</h3>
+            <div class="metric"><span id="carbonResult">0.00</span> <small>kg CO₂e</small></div>
+            <div class="suggestion" id="carbonTip">輸入用電量後，我會自動產生減碳建議。</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="page" id="call">
+        <div class="hero"><div><h2>緊急聯絡與一般通話</h2><p>支援手機 tel: 快撥與模擬雙機通話流程。</p></div></div>
+        <div class="grid">
+          <div class="card">
+            <h3>🚨 緊急求助</h3>
+            <div class="emergency">
+              <a class="call-link" href="tel:119">119<br><span class="small">消防 / 救護</span></a>
+              <a class="call-link" href="tel:035713131">校園專線<br><span class="small">示範號碼，可自行修改</span></a>
+            </div>
+          </div>
+          <div class="card">
+            <h3>📲 對等通話</h3>
+            <div class="row">
+  <div style="flex:1;min-width:220px"><div class="muted small">你的裝置 ID</div><input class="input" id="myPeerId" readonly placeholder="正在取得 ID…"/></div>
+  <button class="btn secondary" onclick="copyMyId()">複製 ID</button>
+</div>
+<input class="input" id="peerId" placeholder="輸入另一台裝置的 ID"/>
+            <button class="btn" style="margin-top:12px" onclick="startCall()">📞 發起雙機通話</button>
+<button class="btn secondary" style="margin-top:12px" onclick="connectPeer()">💬 連接聊天</button>
+<div id="peerConnectionStatus" class="suggestion">正在建立 WebRTC 連線…</div>
+            <p class="muted small">此單檔版本採模擬連線；真正 WebRTC 需要信令伺服器交換 SDP/ICE。</p>
+          </div>
+          <div class="card full">
+            <div class="call-screen">
+              <div class="call-avatar" id="callAvatar">?</div>
+              <h3 id="callTarget">尚未通話</h3>
+              <div id="callStatus">等待撥號</div>
+              <div id="callTimer" style="font-size:24px;margin-top:8px">00:00</div>
+              <div class="call-actions">
+                <button class="round" id="muteBtn" onclick="toggleMute()">🎙️</button>
+                <button class="round" id="speakerBtn" onclick="toggleSpeaker()">🔊</button>
+                <button class="round hang" onclick="endCall()">📵</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="page" id="chat">
+        <div class="hero"><div><h2>即時聊天</h2><p>支援 Emoji 貼圖與手機相簿照片預覽。</p></div></div>
+        <div class="card full">
+          <div class="chat-wrap">
+            <div class="chat-window" id="chatWindow">
+              <div class="msg-row"><div class="bubble">嗨！今天記得帶傘喔 ☔</div></div>
+              <div class="msg-row me"><div class="bubble">好，謝謝提醒！🌱</div></div>
+            </div>
+            <div>
+              <div class="stickers" id="stickerPicker">
+                <button class="sticker" onclick="sendSticker('😀')">😀</button><button class="sticker" onclick="sendSticker('🌱')">🌱</button>
+                <button class="sticker" onclick="sendSticker('☀️')">☀️</button><button class="sticker" onclick="sendSticker('🌧️')">🌧️</button>
+                <button class="sticker" onclick="sendSticker('♻️')">♻️</button><button class="sticker" onclick="sendSticker('👍')">👍</button>
+              </div>
+              <div class="row" style="margin-bottom:8px">
+                <span class="badge" id="chatConnectionBadge">未連線</span>
+                <span class="muted small">兩台裝置需分別開啟本頁，交換「裝置 ID」後連線。</span>
+              </div>
+              <div class="composer">
+                <button class="btn secondary" onclick="toggleSticker()">😊</button>
+                <input class="input" id="msgInput" placeholder="輸入訊息..." onkeydown="if(event.key==='Enter')sendMessage()"/>
+                <button class="btn" onclick="sendMessage()">發送</button>
+              </div>
+              <div class="row" style="margin-top:10px">
+                <label class="btn secondary" for="photoInput">🖼️ 從相簿選照片</label>
+                <input id="photoInput" type="file" accept="image/*" style="display:none" onchange="sendPhoto(event)"/>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="page" id="settings">
+        <div class="hero"><div><h2>設定</h2><p>管理個人資料、外觀與通知。</p></div></div>
+        <div class="grid">
+          <div class="card">
+            <h3>👤 個人資料</h3>
+            <div class="settings-group">
+              <input class="input" id="nickname" value="Tim" placeholder="暱稱"/>
+              <input class="input" id="avatarInput" type="file" accept="image/*" onchange="updateAvatar(event)"/>
+              <button class="btn" onclick="saveProfile()">儲存資料</button>
+            </div>
+          </div>
+          <div class="card">
+            <h3>🎨 外觀主題</h3>
+            <div class="row">
+              <button class="theme-btn" onclick="setTheme('light')">☀️ 淺色</button>
+              <button class="theme-btn" onclick="setTheme('dark')">🌙 深色</button>
+              <button class="theme-btn" onclick="setTheme('green')">🌿 綠色環保</button>
+            </div>
+          </div>
+          <div class="card">
+            <h3>🔔 推播通知</h3>
+            <div class="row" style="justify-content:space-between">
+              <span>允許推播通知</span>
+              <label class="switch"><input type="checkbox" id="notifyToggle" checked><span class="knob"></span></label>
+            </div>
+          </div>
+          <div class="card">
+            <h3>🧹 暫存管理</h3>
+            <p class="muted">清除本頁儲存的主題、暱稱與碳排資料。</p>
+            <button class="btn danger" onclick="clearCache()">清除暫存</button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<script>
+const tabs=document.querySelectorAll('.tab'), pages=document.querySelectorAll('.page');
+tabs.forEach(t=>t.addEventListener('click',()=>openTab(t.dataset.tab)));
+function openTab(id){
+  tabs.forEach(t=>t.classList.toggle('active',t.dataset.tab===id));
+  pages.forEach(p=>p.classList.toggle('active',p.id===id));
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function searchWeather(){
+  const city=document.getElementById('cityInput').value.trim()||'台北';
+  const seed=[...city].reduce((a,c)=>a+c.charCodeAt(0),0);
+  const temp=22+(seed%12), hum=55+(seed%35), rain=10+(seed%70);
+  const cond=rain>55?'陣雨':rain>30?'多雲':'晴時多雲';
+  document.getElementById('tempVal').textContent=temp+'°C';
+  document.getElementById('humidityVal').textContent=hum+'%';
+  document.getElementById('rainVal').textContent=rain+'%';
+  document.getElementById('conditionVal').textContent=cond;
+  document.getElementById('homeTemp').textContent=temp+'°C';
+  document.getElementById('homeWeather').textContent=city+' · '+cond;
+}
+function calcCarbon(){
+  const kwh=parseFloat(document.getElementById('powerInput').value)||0, result=kwh*0.495;
+  document.getElementById('carbonResult').textContent=result.toFixed(2);
+  document.getElementById('homeCarbon').textContent=result.toFixed(1);
+  let tip='用電量偏低，保持隨手關燈與節能家電的習慣。';
+  if(kwh>500) tip='用電量較高：可優先檢查冷氣溫度、待機電器與高耗電設備。';
+  else if(kwh>250) tip='可將冷氣設定約 26–28°C，並善用定時與風扇降低耗電。';
+  document.getElementById('carbonTip').textContent=tip;
+  localStorage.setItem('carbon',result.toFixed(1));
+}
+let peer=null, dataConn=null, mediaCall=null, localStream=null;
+let callState='idle', callSeconds=0, callTimerInt=null, muted=false, speaker=false;
+function setConnStatus(text){document.getElementById('peerConnectionStatus').textContent=text;document.getElementById('chatConnectionBadge').textContent=text.includes('已連線')?'已連線':'未連線';}
+function initPeer(){
+  if(typeof Peer==='undefined'){setConnStatus('PeerJS 載入失敗，請確認網路連線');return;}
+  peer=new Peer(undefined,{debug:1});
+  peer.on('open',id=>{document.getElementById('myPeerId').value=id;setConnStatus('裝置 ID 已建立，等待另一台裝置連線');});
+  peer.on('connection',conn=>setupDataConnection(conn));
+  peer.on('call',async call=>{
+    document.getElementById('callTarget').textContent='來電：'+call.peer;
+    document.getElementById('callAvatar').textContent=call.peer[0].toUpperCase();
+    document.getElementById('callStatus').textContent='來電中…';
+    try{
+      localStream=await navigator.mediaDevices.getUserMedia({audio:true});
+      call.answer(localStream); setupMediaCall(call);
+      document.getElementById('callStatus').textContent='通話中';
+    }catch(e){document.getElementById('callStatus').textContent='無法取得麥克風';}
+  });
+  peer.on('error',e=>setConnStatus('連線錯誤：'+e.type));
+}
+function setupDataConnection(conn){
+  dataConn=conn;
+  dataConn.on('open',()=>setConnStatus('已連線：'+dataConn.peer));
+  dataConn.on('data',data=>{
+    if(data.type==='text'){const row=document.createElement('div');row.className='msg-row';const b=document.createElement('div');b.className='bubble';b.textContent=data.text;row.appendChild(b);document.getElementById('chatWindow').appendChild(row);document.getElementById('chatWindow').scrollTop=999999;}
+    if(data.type==='sticker'){const row=document.createElement('div');row.className='msg-row';const b=document.createElement('div');b.className='bubble';b.textContent=data.text;row.appendChild(b);document.getElementById('chatWindow').appendChild(row);}
+    if(data.type==='photo'){const row=document.createElement('div');row.className='msg-row';const b=document.createElement('div');b.className='bubble';b.innerHTML='<img src="'+data.src+'" alt="照片"/>';row.appendChild(b);document.getElementById('chatWindow').appendChild(row);}
+  });
+  dataConn.on('close',()=>setConnStatus('對方已離線'));
+}
+function connectPeer(){
+  const id=document.getElementById('peerId').value.trim();
+  if(!id||!peer){alert('請先取得自己的裝置 ID，再輸入對方 ID');return;}
+  setupDataConnection(peer.connect(id));
+}
+function copyMyId(){const id=document.getElementById('myPeerId').value;if(id)navigator.clipboard?.writeText(id).then(()=>alert('ID 已複製'))}
+async function startCall(){
+  const id=document.getElementById('peerId').value.trim();
+  if(!id||!peer){alert('請先輸入對方裝置 ID');return;}
+  try{
+    localStream=await navigator.mediaDevices.getUserMedia({audio:true});
+    document.getElementById('callTarget').textContent=id;
+    document.getElementById('callAvatar').textContent=id[0].toUpperCase();
+    document.getElementById('callStatus').textContent='撥號中…';
+    const call=peer.call(id,localStream);setupMediaCall(call);
+  }catch(e){alert('需要允許麥克風權限才能進行通話。');}
+}
+function setupMediaCall(call){
+  mediaCall=call; callState='connected';document.getElementById('callStatus').textContent='通話中';
+  clearInterval(callTimerInt);callSeconds=0;
+  callTimerInt=setInterval(()=>{callSeconds++;const m=String(Math.floor(callSeconds/60)).padStart(2,'0'),s=String(callSeconds%60).padStart(2,'0');document.getElementById('callTimer').textContent=m+':'+s},1000);
+  call.on('stream',remoteStream=>{
+    let audio=document.getElementById('remoteAudio');
+    if(!audio){audio=document.createElement('audio');audio.id='remoteAudio';audio.autoplay=true;document.body.appendChild(audio);}
+    audio.srcObject=remoteStream;
+  });
+  call.on('close',endCall);call.on('error',()=>endCall());
+}
+function endCall(){callState='idle';clearInterval(callTimerInt);if(mediaCall)mediaCall.close();if(localStream)localStream.getTracks().forEach(t=>t.stop());document.getElementById('callStatus').textContent='通話已結束';document.getElementById('callTimer').textContent='00:00';}
+function toggleMute(){muted=!muted;if(localStream)localStream.getAudioTracks().forEach(t=>t.enabled=!muted);document.getElementById('muteBtn').classList.toggle('active',muted);}
+function toggleSpeaker(){speaker=!speaker;const a=document.getElementById('remoteAudio');if(a)a.volume=speaker?1:0.45;document.getElementById('speakerBtn').classList.toggle('active',speaker);}
+function toggleSticker(){document.getElementById('stickerPicker').classList.toggle('show')}
+function addBubble(content,isHtml=false){
+  const row=document.createElement('div');row.className='msg-row me';const b=document.createElement('div');b.className='bubble';
+  if(isHtml)b.innerHTML=content;else b.textContent=content;row.appendChild(b);document.getElementById('chatWindow').appendChild(row);
+  document.getElementById('chatWindow').scrollTop=999999;document.getElementById('latestMsg').textContent='你：'+(isHtml?'已傳送一張照片':content);
+}
+function sendMessage(){const i=document.getElementById('msgInput');const v=i.value.trim();if(!v)return;addBubble(v);if(dataConn?.open)dataConn.send({type:'text',text:v});i.value='';}
+function sendSticker(s){addBubble(s);if(dataConn?.open)dataConn.send({type:'sticker',text:s});document.getElementById('stickerPicker').classList.remove('show');}
+function sendPhoto(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{addBubble('<img src="'+r.result+'" alt="照片"/>',true);if(dataConn?.open)dataConn.send({type:'photo',src:r.result});};r.readAsDataURL(f);e.target.value='';}
+function setTheme(t){document.body.className=t==='light'?'':t;localStorage.setItem('theme',t);}
+function saveProfile(){
+  const name=document.getElementById('nickname').value.trim()||'使用者';
+  document.getElementById('topNickname').textContent=name;document.getElementById('homeName').textContent=name;
+  if(!document.querySelector('#topAvatar img'))document.getElementById('topAvatar').textContent=name[0].toUpperCase();
+  localStorage.setItem('nickname',name);alert('個人資料已儲存');
+}
+function updateAvatar(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{document.getElementById('topAvatar').innerHTML='<img src="'+r.result+'">';localStorage.setItem('avatar',r.result)};r.readAsDataURL(f);}
+function clearCache(){localStorage.clear();alert('暫存已清除');location.reload();}
+initPeer();
+(function init(){
+ const theme=localStorage.getItem('theme');if(theme)setTheme(theme);
+ const name=localStorage.getItem('nickname');if(name){document.getElementById('nickname').value=name;document.getElementById('topNickname').textContent=name;document.getElementById('homeName').textContent=name;document.getElementById('topAvatar').textContent=name[0].toUpperCase();}
+ const av=localStorage.getItem('avatar');if(av)document.getElementById('topAvatar').innerHTML='<img src="'+av+'">';
+ const carbon=localStorage.getItem('carbon');if(carbon)document.getElementById('homeCarbon').textContent=carbon;
+})();
+</script>
+</body>
+</html>
